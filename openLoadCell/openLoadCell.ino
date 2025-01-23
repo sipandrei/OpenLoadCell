@@ -21,9 +21,9 @@ bool isRecording = false;
 
 void setup() {
   Serial.begin(115200);
-  //lcd.init();
-  //lcd.backlight();
-  //lcd.setCursor(3,0);
+  lcd.init();
+  lcd.backlight();
+  lcd.setCursor(3,0);
   
 
   //bridge.begin(dataPinBridge, clockPinBridge);
@@ -32,23 +32,23 @@ void setup() {
   
   if(!SD.begin(SDPin)){
     Serial.println("SD initialization failed");
-    //lcd.clear();
-    //lcd.print("SD initialization FAILED!");
+    lcd.clear();
+    lcd.print("SD initialization FAILED!");
     while(1);
   }
   Serial.println("SD initialized");
-  //lcd.print("SD initialized!");
+  lcd.print("SD initialized!");
   
-  //lcd.clear();
-  //lcd.print("Waiting for start command");
+  lcd.clear();
+  lcd.print("Waiting for start   command...");
   while(isRecording == false){
     buttonDebounce(digitalRead(buttonPin));
     
     //Serial.println(isRecording);
   }
 
-  //lcd.clear();
-  //lcd.print("Initializing test...");
+  lcd.clear();
+  lcd.print("Initializing test...");
   Serial.print("Initializing test...");
   deformationRecording= SD.open(nameMaker(), FILE_WRITE);
   
@@ -59,7 +59,7 @@ void loop() {
   //buttonDebounce(digitalRead(buttonPin));
 }
 
-void buttonDebounce(int buttonReading){ Serial.print(buttonState);
+void buttonDebounce(int buttonReading){ 
   if(buttonReading != buttonState and lastDebounce == 0)  
     lastDebounce = millis();
   if((millis()-lastDebounce) > debounce){
@@ -83,3 +83,5 @@ String nameMaker(){
   }
   return filename;
 }
+
+void addCsvLine(File file, String deformation, String readTime){}
