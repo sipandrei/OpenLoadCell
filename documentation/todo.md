@@ -1,7 +1,7 @@
 # To Do list for OpenLoadCell
 
-- [ x ] move initialization sequence for file in _void loop()_
-- [ x ] add a stop recording option
+- [x] move initialization sequence for file in _void loop()_
+- [x] add a stop recording option
 - [ ] read file with calibration constants for strain gauge
 - [ ] display values that are being read
 - [ ] display calibration constant used
