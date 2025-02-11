@@ -14,6 +14,7 @@ int calibrationValue = 0;
 const int SDPin = 10;
 const int buttonPin = 4;
 Sd2Card card;
+long long startTime=0;
 
 int buttonState = 1;
 int debounce = 50;
@@ -44,6 +45,8 @@ void setup() {
 void loop() {
   if(isRecording == false){
     bridge.power_down();
+    if(deformationRecording)
+      deformationRecording.close();
     lcd.clear();
     lcd.print("Waiting for start   command...");
     while(isRecording == false){
@@ -54,9 +57,12 @@ void loop() {
     lcd.print("Initializing test...");
     Serial.print("Initializing test...");
     deformationRecording= SD.open(nameMaker(), FILE_WRITE);
+    addCsvLine(deformationRecording, "Current Deformation", "Read Time");
     bridge.power_up();
+    startTime = millis();
   }
-  
+  int currentDeformation;
+  addCsvLine(deformationRecording,String(currentDeformation), String(millis()-startTime));
   buttonDebounce(digitalRead(buttonPin)); //verify test stop
 }
 
@@ -85,4 +91,8 @@ String nameMaker(){
   return filename;
 }
 
-void addCsvLine(File file, String deformation, String readTime){}
+void addCsvLine(File file, String deformation, String readTime){
+  file.println(readTime);
+  file.print(",");
+  file.print(deformation);
+  }
