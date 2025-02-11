@@ -9,6 +9,7 @@ HX711 bridge;
 
 const int dataPinBridge = 5;
 const int clockPinBridge = 6;
+int calibrationValue = 0;
 
 const int SDPin = 10;
 const int buttonPin = 4;
@@ -25,9 +26,9 @@ void setup() {
   lcd.backlight();
   lcd.setCursor(3,0);
   
-
-  //bridge.begin(dataPinBridge, clockPinBridge);
-
+  bridge.begin(dataPinBridge, clockPinBridge);
+  bridge.setScale(calibrationValue); 
+  
   pinMode(buttonPin, INPUT_PULLUP);
   
   if(!SD.begin(SDPin)){
@@ -38,25 +39,25 @@ void setup() {
   }
   Serial.println("SD initialized");
   lcd.print("SD initialized!");
-  
-  lcd.clear();
-  lcd.print("Waiting for start   command...");
-  while(isRecording == false){
-    buttonDebounce(digitalRead(buttonPin));
-    
-    //Serial.println(isRecording);
-  }
-
-  lcd.clear();
-  lcd.print("Initializing test...");
-  Serial.print("Initializing test...");
-  deformationRecording= SD.open(nameMaker(), FILE_WRITE);
-  
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  //buttonDebounce(digitalRead(buttonPin));
+  if(isRecording == false){
+    bridge.power_down();
+    lcd.clear();
+    lcd.print("Waiting for start   command...");
+    while(isRecording == false){
+      buttonDebounce(digitalRead(buttonPin));
+    }
+
+    lcd.clear();
+    lcd.print("Initializing test...");
+    Serial.print("Initializing test...");
+    deformationRecording= SD.open(nameMaker(), FILE_WRITE);
+    bridge.power_up();
+  }
+  
+  buttonDebounce(digitalRead(buttonPin)); //verify test stop
 }
 
 void buttonDebounce(int buttonReading){ 
