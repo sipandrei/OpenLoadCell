@@ -28,7 +28,7 @@ void setup() {
   lcd.setCursor(3,0);
   
   bridge.begin(dataPinBridge, clockPinBridge);
-  bridge.setScale(calibrationValue); 
+  bridge.set_scale(calibrationValue); 
   
   pinMode(buttonPin, INPUT_PULLUP);
   
@@ -62,7 +62,7 @@ void loop() {
     startTime = millis();
   }
   int currentDeformation;
-  addCsvLine(deformationRecording,String(currentDeformation), String(millis()-startTime));
+  addCsvLine(deformationRecording,String(currentDeformation), String(int(millis()-startTime)));
   buttonDebounce(digitalRead(buttonPin)); //verify test stop
 }
 
@@ -92,7 +92,7 @@ String nameMaker(){
 }
 
 void addCsvLine(File file, String deformation, String readTime){
-  file.println(readTime);
+  file.print(readTime);
   file.print(",");
-  file.print(deformation);
+  file.println(deformation);
   }
