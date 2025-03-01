@@ -1,11 +1,20 @@
+// The format of a line of the config file SHALL be: <nominal resistance>,<compensation factor>
+// First line of config.txt SHALL be the header
+
 #include <LiquidCrystal_I2C.h>
 #include <HX711.h>
 #include <SPI.h>
 #include <SD.h>
+#include <CSV_Parser.h>
 
-File deformationRecording;
+File deformationRecording, configFile;
 LiquidCrystal_I2C lcd(0x27,20,4);
 HX711 bridge;
+
+float baseVoltage = 5.0;
+float wheatstoneVoltage = 0;
+float comp[4];
+float res[4];
 
 const int dataPinBridge = 5;
 const int clockPinBridge = 6;
@@ -15,6 +24,14 @@ const int SDPin = 10;
 const int buttonPin = 4;
 Sd2Card card;
 long long startTime=0;
+CSV_Parser cp("ff");
+
+char feedRowParser() {
+  return configFile.read();
+}
+bool rowParserFinished() {
+  return ((configFile.available()>0)?false:true);
+}
 
 int buttonState = 1;
 int debounce = 50;
@@ -40,6 +57,39 @@ void setup() {
   }
   Serial.println("SD initialized");
   lcd.print("SD initialized!");
+
+  configFile = SD.open("/config.csv");
+  if(!configFile){
+    lcd.clear();
+    lcd.print("Config Missing!");
+    Serial.println("Config Missing!");
+    while(1);
+  }
+  int i = 0;
+
+  float *rez = (float*)cp[0];
+  float *comps = (float*)cp[1];
+  
+  while(cp.parseRow()){
+    if(i < 4){
+      res[i] = rez[0];
+      comp[i] = comps[0];
+      Serial.print(res[i]);
+      Serial.print(" ");
+      Serial.println(comp[i]);
+      i++;
+    } 
+  }
+  for(int j = 0; j < 4; j++){
+    if(res[j] == 0)
+      {
+        Serial.println(res[j]);
+        lcd.clear();
+        lcd.print("Config Error");
+        lcd.print(" Wrong Res");
+        while(1);
+      }
+  }
 }
 
 void loop() {
