@@ -7,7 +7,6 @@
 #include <HX711.h>
 #include <SPI.h>
 #include <SD.h>
-#include <CSV_Parser.h>
 
 File deformationRecording, configFile;
 LiquidCrystal_I2C lcd(0x27,20,4);
@@ -17,7 +16,7 @@ int bridgeSetup = 1;
 float baseVoltage = 5.0;
 float poisson = 0;
 float statDef = 0;
-float comp[4];
+float comp = 0;
 //float res[4];
 const int dataPinBridge = 5;
 const int clockPinBridge = 6;
@@ -27,14 +26,6 @@ const int SDPin = 10;
 const int buttonPin = 4;
 Sd2Card card;
 long long startTime=0;
-CSV_Parser cp("fffdd");
-
-char feedRowParser() {
-  return configFile.read();
-}
-bool rowParserFinished() {
-  return ((configFile.available()>0)?false:true);
-}
 
 int buttonState = 1;
 int debounce = 50;
@@ -68,38 +59,25 @@ void setup() {
     Serial.println("Config Missing!");
     while(1);
   }
-  int i = 0;
-
-  float *comps = (float*)cp[0];
-  float *filePoisson = (float*)cp[1];
-  float *fileStatDef = (float*)cp[2];
-  int *fileCalFact = (int*)cp[3];
-  int *configSetup = (int*)cp[4];
   
-  while(cp.parseRow()){
-    if(i == 0){
-      poisson = filePoisson[0];
-      statDef = fileStatDef[0];
-      calibrationValue = fileCalFact[0];
-      bridgeSetup = configSetup[0];
-      
-      Serial.println((String)poisson+" "+(String)statDef+" "+(String)calibrationValue+" "+(String)bridgeSetup);
+  char c = configFile.read();
+  while(c!='\n'){ //Skiping first line
+    Serial.print(c);
+    c = configFile.read();
     }
-    
-    if(i < 4){
-      comp[i] = comps[0];
-      Serial.println(comp[i]);
-      i++;
-    } 
-  }
-  for(int j = 0; j < 4; j++){
-    if(comp[j] == 0)
-      {
-        lcd.clear();
-        lcd.print("Config Error");
-        lcd.print(" ZERO Res or Comp");
-        while(1);
-      }
+  Serial.println("");
+  comp = configFile.parseFloat();
+  poisson = configFile.parseFloat();
+  statDef = configFile.parseFloat();
+  calibrationValue = configFile.parseInt();
+  bridgeSetup = configFile.parseInt();
+  Serial.print(comp);
+  Serial.println(" " + (String)poisson+" "+(String)statDef+" "+(String)calibrationValue+" "+(String)bridgeSetup);
+  if(comp == 0 || bridgeSetup < 1 || bridgeSetup > 8 || poisson >= 1){
+      lcd.clear();
+      lcd.print("Config Error");
+      lcd.print(" ZERO Comp");
+      while(1);
   }
   configFile.close();
 }
@@ -128,7 +106,7 @@ void loop() {
   float voltageReading = rawReading * baseVoltage / 16777216;
   float deformationReading = deformationParsing(voltageReading);
   addCsvLine(deformationRecording,String(rawReading), String(int(millis()-startTime)), String(voltageReading), String(deformationReading));
-  //recordingDisplay((String)rawReading, (String)voltageReading, (String)deformationReading);
+  recordingDisplay((String)rawReading, (String)voltageReading, (String)deformationReading);
   buttonDebounce(digitalRead(buttonPin)); //verify test stop
   delay(10);
 }
@@ -171,35 +149,35 @@ void addCsvLine(File file, String rawValue, String readTime, String readVoltage,
 float deformationParsing(float voltage){
   switch(bridgeSetup){
     case 1:
-      return 4 * voltage / comp[0] / baseVoltage - statDef;
+      return 4 * voltage / comp / baseVoltage - statDef;
     break;
     
     case 2:
-      return 4 * voltage / comp[0] / baseVoltage;
+      return 4 * voltage / comp / baseVoltage;
     break;
 
     case 3:
-      return 4 * voltage / (1 + poisson) / comp[0] / baseVoltage;
+      return 4 * voltage / (1 + poisson) / comp / baseVoltage;
     break;
     
     case 4:
-      return 2 * voltage / comp[0] / baseVoltage;
+      return 2 * voltage / comp / baseVoltage;
     break;
         
     case 5:
-      return 2 * voltage / comp[0] / baseVoltage - statDef;
+      return 2 * voltage / comp / baseVoltage - statDef;
     break;
         
     case 6:
-      return 2 * voltage / (1 + poisson) / comp[0] / baseVoltage; 
+      return 2 * voltage / (1 + poisson) / comp / baseVoltage; 
     break;
         
     case 7:
-      return voltage / comp[0] / baseVoltage;
+      return voltage / comp / baseVoltage;
     break;
         
     case 8:
-      return 2 * voltage / (1 - poisson) / comp[0] / baseVoltage;
+      return 2 * voltage / (1 - poisson) / comp / baseVoltage;
     break;
   
   }
