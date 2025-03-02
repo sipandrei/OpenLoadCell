@@ -101,6 +101,7 @@ void setup() {
         while(1);
       }
   }
+  configFile.close();
 }
 
 void loop() {
@@ -127,7 +128,7 @@ void loop() {
   float voltageReading = rawReading * baseVoltage / 16777216;
   float deformationReading = deformationParsing(voltageReading);
   addCsvLine(deformationRecording,String(rawReading), String(int(millis()-startTime)), String(voltageReading), String(deformationReading));
-  recordingDisplay((String)rawReading, (String)voltageReading, (String)deformationReading);
+  //recordingDisplay((String)rawReading, (String)voltageReading, (String)deformationReading);
   buttonDebounce(digitalRead(buttonPin)); //verify test stop
   delay(10);
 }
