@@ -20,12 +20,13 @@ float comp = 0;
 //float res[4];
 const int dataPinBridge = 5;
 const int clockPinBridge = 6;
-int calibrationValue = 0;
+int calibrationValue = 1;
+long rawReading = 0;
 
 const int SDPin = 10;
 const int buttonPin = 4;
 Sd2Card card;
-long long startTime=0;
+int startTime=0;
 
 int buttonState = 1;
 int debounce = 50;
@@ -99,13 +100,15 @@ void loop() {
     addCsvLine(deformationRecording, "Raw Reading", "Read Time", "Voltage Reading", "Deformation Value");
     bridge.power_up();
     startTime = millis();
+    Serial.println("start time: "+ String(int(startTime)));
     bridge.tare();
   }
   
-  int rawReading = bridge.read();
-  float voltageReading = rawReading * baseVoltage / 16777216;
-  float deformationReading = deformationParsing(voltageReading);
-  addCsvLine(deformationRecording,String(rawReading), String(int(millis()-startTime)), String(voltageReading), String(deformationReading));
+  rawReading = bridge.get_units();
+  Serial.println(rawReading);
+  double voltageReading = rawReading * 1000 / 16777216/2;
+  double deformationReading = deformationParsing(voltageReading);
+  addCsvLine(deformationRecording,String(rawReading), String(millis()-startTime), String(voltageReading), String(deformationReading));
   recordingDisplay((String)rawReading, (String)voltageReading, (String)deformationReading);
   buttonDebounce(digitalRead(buttonPin)); //verify test stop
   delay(10);
@@ -137,6 +140,7 @@ String nameMaker(){
 }
 
 void addCsvLine(File file, String rawValue, String readTime, String readVoltage, String deformation){
+  //Serial.println(readTime + " " + rawValue);
   file.print(readTime);
   file.print(",");
   file.print(rawValue);
@@ -144,6 +148,7 @@ void addCsvLine(File file, String rawValue, String readTime, String readVoltage,
   file.print(readVoltage);
   file.print(",");
   file.println(deformation);
+  Serial.print(rawValue);
   }
 
 float deformationParsing(float voltage){
