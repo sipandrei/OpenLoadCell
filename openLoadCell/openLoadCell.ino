@@ -13,13 +13,13 @@ LiquidCrystal_I2C lcd(0x27,20,4);
 HX711 bridge;
 
 int bridgeSetup = 1;
-float baseVoltage = 5.0;
+float baseVoltage = 4.5;
 float poisson = 0;
 float statDef = 0;
 float comp = 0;
 //float res[4];
 const int dataPinBridge = 5;
-const int clockPinBridge = 6;
+const int clockPinBridge = 3;
 int calibrationValue = 1;
 long rawReading = 0;
 
@@ -40,7 +40,6 @@ void setup() {
   lcd.setCursor(3,0);
   
   bridge.begin(dataPinBridge, clockPinBridge);
-  bridge.set_scale(calibrationValue); 
   
   pinMode(buttonPin, INPUT_PULLUP);
   
@@ -74,6 +73,10 @@ void setup() {
   bridgeSetup = configFile.parseInt();
   Serial.print(comp);
   Serial.println(" " + (String)poisson+" "+(String)statDef+" "+(String)calibrationValue+" "+(String)bridgeSetup);
+
+  bridge.set_scale(calibrationValue); 
+
+  
   if(comp == 0 || bridgeSetup < 1 || bridgeSetup > 8 || poisson >= 1){
       lcd.clear();
       lcd.print("Config Error");
@@ -106,12 +109,12 @@ void loop() {
   
   rawReading = bridge.get_units();
   Serial.println(rawReading);
-  double voltageReading = rawReading * 1000 / 16777216/2;
+  double voltageReading = rawReading *  baseVoltage * 1000 * 2  / 16777216;
   double deformationReading = deformationParsing(voltageReading);
   addCsvLine(deformationRecording,String(rawReading), String(millis()-startTime), String(voltageReading), String(deformationReading));
   recordingDisplay((String)rawReading, (String)voltageReading, (String)deformationReading);
   buttonDebounce(digitalRead(buttonPin)); //verify test stop
-  delay(10);
+  delay(100); //TO DELETE FOR DYNAMIC LOADS
 }
 
 void buttonDebounce(int buttonReading){ 
